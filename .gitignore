@@ -1,0 +1,8 @@
+# object files
+obj/
+
+# ycm
+compile_commands.json
+
+# binary
+main
