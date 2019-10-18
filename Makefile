@@ -1,19 +1,19 @@
-IDIR =.
-CC=gcc
-CFLAGS=-I$(IDIR)
+IDIR = src
+CC = gcc
+CFLAGS = -I$(IDIR) -Wall -Wpedantic
 
-ODIR=obj
-LDIR=lib
+ODIR = obj
+LDIR = lib
 
-LIBS=-lX11
+LIBS = -lX11
 
-_DEPS = 
-DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS_))
+_DEPS = xapi.h
+DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = main.o
+_OBJ = main.o xapi.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
-$(ODIR)/%.o: %.c $(DEPS)
+$(ODIR)/%.o: $(IDIR)/%.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 main: $(OBJ)
