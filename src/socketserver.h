@@ -8,4 +8,12 @@
 
 #define BUF_SIZE 256
 
-int socket_server_start(char* port);
+typedef struct {
+    char* port;
+    unsigned char** buf;
+    unsigned long* bufsize;
+} SocketServerAttr;
+
+void init_socksrv_attr(SocketServerAttr* socksrv_attr, char* port, unsigned char** buf, unsigned long* bufsize);
+
+void* socket_server_start(void* socket_server_attr);

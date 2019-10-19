@@ -5,7 +5,7 @@ CFLAGS = -I$(IDIR) -Wall -Wpedantic
 ODIR = obj
 LDIR = lib
 
-LIBS = -lX11 -lXext -ljpeg
+LIBS = -lX11 -lXext -ljpeg -lpthread
 
 _DEPS = xapi.h xjpegapi.h socketserver.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))

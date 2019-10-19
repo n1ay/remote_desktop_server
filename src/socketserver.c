@@ -1,6 +1,6 @@
 #include "socketserver.h"
 
-int socket_server_start(char* port) {
+void *socket_server_start(void* socksrv_attr) {
     int s, sfd;
     struct addrinfo hints, *res, *rp;
     memset(&hints, 0, sizeof(hints));
@@ -8,10 +8,10 @@ int socket_server_start(char* port) {
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_PASSIVE;
 
-    s = getaddrinfo(NULL, port, &hints, &res);
+    s = getaddrinfo(NULL, ((SocketServerAttr*) socksrv_attr)->port, &hints, &res);
     if (s != 0) {
         gai_strerror(s);
-        return 1;
+        return (void*) 1;
     }
 
     for (rp = res; rp != NULL; rp = rp->ai_next) {
@@ -29,25 +29,34 @@ int socket_server_start(char* port) {
 
     if (rp == NULL) {
         fprintf(stderr, "Could not bind\n");
-        return 1;
+        return (void*) 1;
     }
     freeaddrinfo(res);
 
     struct sockaddr_storage peer_addr;
     socklen_t peer_addr_len;
     ssize_t nread;
-    char* buf = (char*) malloc(BUF_SIZE);
-    memset(buf, 0, BUF_SIZE);
+    char* initbuf = (char*) malloc(BUF_SIZE);
+    memset(initbuf, 0, BUF_SIZE);
     while(1) {
         peer_addr_len = sizeof(struct sockaddr_storage);
-        nread = recvfrom(sfd, buf, BUF_SIZE, 0, (struct sockaddr*) &peer_addr, &peer_addr_len);
-        if (nread == -1) {
-            continue;
+        nread = recvfrom(sfd, initbuf, BUF_SIZE, 0, (struct sockaddr*) &peer_addr, &peer_addr_len);
+        if (nread > 0) {
+            break;
         }
-
-        char host[NI_MAXHOST], service[NI_MAXSERV];
-
-        s = getnameinfo((struct sockaddr*) &peer_addr, peer_addr_len, host, NI_MAXHOST, service, NI_MAXSERV, NI_NUMERICSERV);
-        sendto(sfd, buf, nread, 0, (struct sockaddr*) &peer_addr, peer_addr_len);
     }
+
+    free(initbuf);
+    char host[NI_MAXHOST], service[NI_MAXSERV];
+    s = getnameinfo((struct sockaddr*) &peer_addr, peer_addr_len, host, NI_MAXHOST, service, NI_MAXSERV, NI_NUMERICSERV);
+    while (1) {
+        sendto(sfd, *((SocketServerAttr*) socksrv_attr)->buf, *((SocketServerAttr*) socksrv_attr)->bufsize, 0, (struct sockaddr*) &peer_addr, peer_addr_len);
+        sleep(1);
+    }
+}
+
+void init_socksrv_attr (SocketServerAttr* socksrv_attr, char* port, unsigned char** buf, unsigned long* bufsize) {
+    socksrv_attr->port = port;
+    socksrv_attr->buf = buf;
+    socksrv_attr->bufsize = bufsize;
 }
