@@ -11,7 +11,9 @@ int main() {
     // show image only for debugging purposes
     //show_image(image);
     
-    compress_jpeg(image->data);
+    unsigned char* buf = NULL;
+    unsigned long bufsize = 0;
+    compress_jpeg(image->data, &buf, &bufsize);
 
     // free resources
     XDestroyImage(image);

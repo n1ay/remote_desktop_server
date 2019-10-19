@@ -1,22 +1,14 @@
 #include "xjpegapi.h"
 
-void compress_jpeg(char* data) {
+void compress_jpeg(char* data, unsigned char** buf, unsigned long* bufsize) {
     struct jpeg_compress_struct cinfo;
     struct jpeg_error_mgr jerr;
 
     cinfo.err = jpeg_std_error(&jerr);
     jpeg_create_compress(&cinfo);
 
-    // unsigned char* buffer = NULL;
-    // unsigned long bufsize = 0;
-    // jpeg_mem_dest(&cinfo, &buffer, &bufsize);
+    jpeg_mem_dest(&cinfo, buf, bufsize);
     
-    FILE* fp = fopen("test.jpeg", "wb");
-    if (!fp) {
-        fprintf(stderr, "Error whilst opening file");
-    }
-    jpeg_stdio_dest(&cinfo, fp);
-
     cinfo.image_width = WINDOW_WIDTH;
     cinfo.image_height = WINDOW_HEIGHT;
     cinfo.input_components = 4;

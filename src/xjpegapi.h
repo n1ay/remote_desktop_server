@@ -7,6 +7,6 @@
 
 #define JPEG_COMPRESSION_QUALITY 75
 
-void compress_jpeg(char* data);
+void compress_jpeg(char* data, unsigned char** buf, unsigned long* bufsize);
 
 #endif // _X_JPEG_API_H_
