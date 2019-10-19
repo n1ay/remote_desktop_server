@@ -6,3 +6,6 @@ compile_commands.json
 
 # binary
 main
+
+# jpeg
+*.jpeg

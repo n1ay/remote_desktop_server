@@ -1,4 +1,4 @@
-#include "xapi.h"
+#include "xjpegapi.h"
 
 int main() {
     Display* display = NULL;
@@ -10,6 +10,8 @@ int main() {
 
     // show image only for debugging purposes
     //show_image(image);
+    
+    compress_jpeg(image->data);
 
     // free resources
     XDestroyImage(image);

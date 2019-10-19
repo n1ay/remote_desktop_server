@@ -5,12 +5,12 @@ CFLAGS = -I$(IDIR) -Wall -Wpedantic
 ODIR = obj
 LDIR = lib
 
-LIBS = -lX11
+LIBS = -lX11 -lXext -ljpeg
 
-_DEPS = xapi.h
+_DEPS = xapi.h xjpegapi.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = main.o xapi.o
+_OBJ = main.o xapi.o xjpegapi.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 $(ODIR)/%.o: $(IDIR)/%.c $(DEPS)
