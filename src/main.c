@@ -1,4 +1,5 @@
 #include "xjpegapi.h"
+#include "socketserver.h"
 
 int main() {
     Display* display = NULL;
@@ -14,6 +15,8 @@ int main() {
     unsigned char* buf = NULL;
     unsigned long bufsize = 0;
     compress_jpeg(image->data, &buf, &bufsize);
+
+    socket_server_start("5678");
 
     // free resources
     XDestroyImage(image);

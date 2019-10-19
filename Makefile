@@ -7,10 +7,10 @@ LDIR = lib
 
 LIBS = -lX11 -lXext -ljpeg
 
-_DEPS = xapi.h xjpegapi.h
+_DEPS = xapi.h xjpegapi.h socketserver.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = main.o xapi.o xjpegapi.o
+_OBJ = main.o xapi.o xjpegapi.o socketserver.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 $(ODIR)/%.o: $(IDIR)/%.c $(DEPS)
