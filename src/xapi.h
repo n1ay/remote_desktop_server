@@ -10,6 +10,7 @@
 #define WINDOW_WIDTH 1920
 #define WINDOW_HEIGHT 1080
 #define BYTES_PER_PIXEL 4
+#define BYTES_PER_SCREEN (WINDOW_WIDTH*WINDOW_HEIGHT*BYTES_PER_PIXEL)
 
 void capture_screen(Display* display, XImage** image);
 

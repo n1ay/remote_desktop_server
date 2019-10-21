@@ -13,7 +13,7 @@ int main() {
     // show image only for debugging purposes
     //show_image(image);
 
-    unsigned char* buf = NULL;
+    unsigned char* buf = malloc(BYTES_PER_SCREEN);
     unsigned long bufsize = 0;
     compress_jpeg(image->data, &buf, &bufsize);
 
@@ -22,7 +22,11 @@ int main() {
     pthread_t socket_server_thread;
     pthread_create(&socket_server_thread, NULL, socket_server_start, (void*) &socksrv_attr);
 
-    getchar();
+    while(1) {
+        capture_screen(display, &image);
+        compress_jpeg(image->data, &buf, &bufsize);
+    }
+
     // free resources
     XDestroyImage(image);
     XCloseDisplay(display);

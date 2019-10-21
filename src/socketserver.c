@@ -1,11 +1,11 @@
 #include "socketserver.h"
 
-void *socket_server_start(void* socksrv_attr) {
-    int s, sfd;
+void* socket_server_start(void* socksrv_attr) {
+    int s, sfd, new_fd;
     struct addrinfo hints, *res, *rp;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;
 
     s = getaddrinfo(NULL, ((SocketServerAttr*) socksrv_attr)->port, &hints, &res);
@@ -38,20 +38,15 @@ void *socket_server_start(void* socksrv_attr) {
     ssize_t nread;
     char* initbuf = (char*) malloc(BUF_SIZE);
     memset(initbuf, 0, BUF_SIZE);
-    while(1) {
-        peer_addr_len = sizeof(struct sockaddr_storage);
-        nread = recvfrom(sfd, initbuf, BUF_SIZE, 0, (struct sockaddr*) &peer_addr, &peer_addr_len);
-        if (nread > 0) {
-            break;
-        }
+    
+    if (listen(sfd, BACKLOG)) {
+        perror("Could not listen");
     }
+    
+    new_fd = accept(sfd, (struct sockaddr*) &peer_addr, &peer_addr_len);
 
-    free(initbuf);
-    char host[NI_MAXHOST], service[NI_MAXSERV];
-    s = getnameinfo((struct sockaddr*) &peer_addr, peer_addr_len, host, NI_MAXHOST, service, NI_MAXSERV, NI_NUMERICSERV);
-    while (1) {
-        sendto(sfd, *((SocketServerAttr*) socksrv_attr)->buf, *((SocketServerAttr*) socksrv_attr)->bufsize, 0, (struct sockaddr*) &peer_addr, peer_addr_len);
-        sleep(1);
+    while(1) {
+        send(new_fd, *((SocketServerAttr*) socksrv_attr)->buf, *((SocketServerAttr*) socksrv_attr)->bufsize, 0);
     }
 }
 
