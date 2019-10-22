@@ -24,4 +24,5 @@ void compress_jpeg(char* data, unsigned char** buf, unsigned long* bufsize) {
         jpeg_write_scanlines(&cinfo, &row_pointer, 1);
     }
     jpeg_finish_compress(&cinfo);
+    jpeg_destroy_compress(&cinfo);
 }

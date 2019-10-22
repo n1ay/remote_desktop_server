@@ -1,7 +1,7 @@
 #include "socketserver.h"
 
 void* socket_server_start(void* socksrv_attr) {
-    int s, sfd, new_fd, max_fd;
+    int s, sfd, new_fd, max_fd, thr_idx;
     struct addrinfo hints, *res, *rp;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
@@ -11,6 +11,17 @@ void* socket_server_start(void* socksrv_attr) {
     fd_set master, read_fds;
     FD_ZERO(&master);
     FD_ZERO(&read_fds);
+
+    ClientThread cts[MAX_CLIENTS];
+    ClientThreadAttr ctas[MAX_CLIENTS];
+    char threads[MAX_CLIENTS];
+    memset(threads, 0, MAX_CLIENTS * sizeof(char));
+    
+    struct sockaddr_in peer_addr;
+    socklen_t peer_addr_len;
+    ssize_t nread;
+    char* readbuf = (char*) malloc(BUF_SIZE);
+    memset(readbuf, 0, BUF_SIZE);
 
     s = getaddrinfo(NULL, ((SocketServerAttr*) socksrv_attr)->port, &hints, &res);
     if (s != 0) {
@@ -37,26 +48,20 @@ void* socket_server_start(void* socksrv_attr) {
     }
     freeaddrinfo(res);
 
-    struct sockaddr_in peer_addr;
-    socklen_t peer_addr_len;
-    ssize_t nread;
-    char* readbuf = (char*) malloc(BUF_SIZE);
-    memset(readbuf, 0, BUF_SIZE);
-    
     if (listen(sfd, BACKLOG)) {
         perror("listen");
     }
 
     FD_SET(sfd, &master);
     max_fd = sfd;
-    
+
     while(1) {
         read_fds = master;
         if (select(max_fd + 1, &read_fds, NULL, NULL, NULL) == -1) {
             perror("select");
             exit(1);
         }
-
+ 
         for (int i = 0; i <= max_fd; i++) {
             if (FD_ISSET(i, &read_fds)) {
                 if (i == sfd) {
@@ -69,10 +74,22 @@ void* socket_server_start(void* socksrv_attr) {
                             max_fd = new_fd;
                         }
                         printf("New connection from %s on socket %d\n", inet_ntoa(peer_addr.sin_addr), new_fd);
+                        thr_idx = find_free_thread(threads);
+                        if (thr_idx == -1) {
+                            // all threads are used; drop the connection
+                            close(new_fd);
+                        } else {
+                            // there are some free threads in thread pool, start new thread then
+                            printf("Starting thread [%d]\n", thr_idx);
+                            threads[thr_idx] = 1;
+                            cts[thr_idx].fd = new_fd;
+                            init_ct_attr(&ctas[thr_idx], new_fd, socksrv_attr);
+                            pthread_create(&cts[thr_idx].thread, NULL, send_worker, (void*) &ctas[thr_idx]);
+                        }
                     }
                 } else {
                     // data from already connected client
-                    nread = recv(i, readbuf, sizeof(readbuf), 0);
+                    nread = recv(i, readbuf, BUF_SIZE, 0);
                     if (nread <= 0) {
                         if (nread == -1) {
                             perror("recv");
@@ -81,21 +98,58 @@ void* socket_server_start(void* socksrv_attr) {
                         }
                         close(i);
                         FD_CLR(i, &master);
-                    } else {
-                        send(i, readbuf, nread, 0);
+                        thr_idx = find_thread_by_fd(i, threads, cts);
+                        if (thr_idx != -1) {
+                            threads[thr_idx] = 0;
+                            pthread_cancel(cts[thr_idx].thread);
+                            printf("Cancelling thread [%d]\n", thr_idx);
+                        }
                     }
                 }
             }
         }
     }
-
-    /*while(1) {
-        send(new_fd, *((SocketServerAttr*) socksrv_attr)->buf, *((SocketServerAttr*) socksrv_attr)->bufsize, 0);
-    }*/
 }
 
 void init_socksrv_attr (SocketServerAttr* socksrv_attr, char* port, unsigned char** buf, unsigned long* bufsize) {
     socksrv_attr->port = port;
     socksrv_attr->buf = buf;
     socksrv_attr->bufsize = bufsize;
+}
+
+void init_client_thread(ClientThread* client_thread, int fd, pthread_t thread) {
+    client_thread->fd = fd;
+    client_thread->thread = thread;
+}
+
+int find_thread_by_fd(int fd, char threads[], ClientThread cts[]) {
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (threads[i] && cts[i].fd == fd) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+void init_ct_attr(ClientThreadAttr* ct_attr, int fd, SocketServerAttr* socksrv_attr) {
+    ct_attr->fd = fd;
+    ct_attr->buf = socksrv_attr->buf;
+    ct_attr->bufsize = socksrv_attr->bufsize;
+}
+
+void* send_worker(void* ct_attr) {
+    while(1) {
+        send(((ClientThreadAttr*) ct_attr)->fd, *((ClientThreadAttr*) ct_attr)->buf, *((ClientThreadAttr*) ct_attr)->bufsize, MSG_NOSIGNAL);
+    }
+}
+
+int find_free_thread(char threads[]) {
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (!threads[i]) {
+            return i;
+        }
+    }
+
+    return -1;
 }
