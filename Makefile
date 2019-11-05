@@ -5,7 +5,9 @@ CFLAGS = -I$(IDIR) -Wall -Wpedantic
 ODIR = obj
 LDIR = lib
 
-LIBS = -lX11 -lXext -ljpeg -lpthread
+LIBS = -lX11 -lXext -lpthread
+
+STATIC_LIBS = /home/kamil/repos/libjpeg-turbo/libturbojpeg.a
 
 _DEPS = xapi.h xjpegapi.h socketserver.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
@@ -17,7 +19,7 @@ $(ODIR)/%.o: $(IDIR)/%.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 main: $(OBJ)
-	$(CC) -o $@ $^ $(CFLAGS) $(LIBS)
+	$(CC) -o $@ $^ $(CFLAGS) $(STATIC_LIBS) $(LIBS)
 
 .PHONY: clean
 

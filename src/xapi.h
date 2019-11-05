@@ -6,6 +6,7 @@
 #include <X11/Xos.h>
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define WINDOW_WIDTH 1920
 #define WINDOW_HEIGHT 1080

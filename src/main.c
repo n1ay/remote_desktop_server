@@ -24,10 +24,10 @@ int main() {
     while(1) {
         capture_screen(display, &image);
         compress_jpeg(image->data, &buf, &bufsize);
-        printf("%p\n", buf);
     }
 
     // free resources
+    free(buf);
     XDestroyImage(image);
     XCloseDisplay(display);
     return 0;
